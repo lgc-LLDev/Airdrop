@@ -1,0 +1,20 @@
+{
+  "format_version": 1,
+  "tooth": "github.com/lgc-LLSEDev/Airdrop",
+  "version": "0.1.4",
+  "dependencies": {},
+  "information": {
+    "name": "Airdrop",
+    "description": "看，空投！",
+    "author": "student_2333 <lgc2333@126.com>",
+    "license": "Apache-2.0",
+    "homepage": "https://github.com/lgc-LLSEDev/Airdrop"
+  },
+  "placement": [
+    {
+      "source": "Airdrop.js",
+      "destination": "plugins/Airdrop.js"
+    }
+  ],
+  "possession": ["plugins/Airdrop/"]
+}
