@@ -4,7 +4,7 @@
 /* global ll mc logger ParticleColor File */
 
 const PLUGIN_NAME = 'Airdrop';
-const PLUGIN_VERSION = [0, 1, 4];
+const PLUGIN_VERSION = [0, 1, 5];
 
 const PLUGIN_DATA_PATH = `plugins/${PLUGIN_NAME}`;
 const PLUGIN_CONFIG_PATH = `${PLUGIN_DATA_PATH}/config.json`;
@@ -109,8 +109,8 @@ const DIM_NAMESPACE_MAP = {
  */
 /** @type {DroppedAirdrop[]} */
 const droppedAirdrops = [];
-/** @type {string[]} */
-const summonedToolMans = [];
+/** @type {string | null} */
+let summonedToolManUuid = null;
 let droppingAirdrop = false;
 
 let particleSpawner = null;
@@ -266,7 +266,7 @@ async function trySummonAirdrop(pos) {
     z,
     dimId
   );
-  summonedToolMans.push(loadToolMan.uuid);
+  summonedToolManUuid = loadToolMan.uuid;
 
   while (!mc.getBlock(x, maxY, z, dimId)) {
     await sleep(200);
@@ -307,6 +307,7 @@ async function trySummonAirdrop(pos) {
         }, 0);
 
         playTipSound();
+        summonedToolManUuid = null;
         return true;
       }
     }
@@ -314,6 +315,7 @@ async function trySummonAirdrop(pos) {
     await sleep(0);
   }
 
+  summonedToolManUuid = null;
   loadToolMan.simulateDisconnect();
   return false;
 }
@@ -417,7 +419,7 @@ function removeAirdrop(pos) {
 mc.listen('onMobHurt', (mob) => {
   if (mob.isPlayer()) {
     const player = mob.toPlayer();
-    if (summonedToolMans.includes(player.uuid)) return false;
+    if (summonedToolManUuid === player.uuid) return false;
   }
   return true;
 });
