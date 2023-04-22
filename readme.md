@@ -19,10 +19,10 @@
 
 ## 截图
 
-![img](https://raw.githubusercontent.com/lgc-LLSEDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041758.png)  
-![img](https://raw.githubusercontent.com/lgc-LLSEDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041804.png)  
-![img](https://raw.githubusercontent.com/lgc-LLSEDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041738.png)  
-![img](https://raw.githubusercontent.com/lgc-LLSEDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041823.png)
+![img](https://media.githubusercontent.com/media/lgc-LLSEDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041758.png)  
+![img](https://media.githubusercontent.com/media/lgc-LLSEDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041804.png)  
+![img](https://media.githubusercontent.com/media/lgc-LLSEDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041738.png)  
+![img](https://media.githubusercontent.com/media/lgc-LLSEDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041823.png)
 
 ## 安装
 
