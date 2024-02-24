@@ -1,20 +1,24 @@
 {
-  "format_version": 1,
-  "tooth": "github.com/lgc-LLSEDev/Airdrop",
-  "version": "0.1.5",
-  "dependencies": {},
-  "information": {
+  "$schema": "https://raw.githubusercontent.com/lippkg/lip/main/schemas/tooth.v2.schema.json",
+  "format_version": 2,
+  "tooth": "github.com/lgc-LLDev/Airdrop",
+  "version": "0.1.6",
+  "info": {
     "name": "Airdrop",
-    "description": "看，空投！",
-    "author": "lgc2333",
-    "license": "Apache-2.0",
-    "homepage": "https://github.com/lgc-LLSEDev/Airdrop"
+    "description": "Look, an airdrop!",
+    "author": "student_2333",
+    "tags": ["plugin", "lse", "quickjs"]
   },
-  "placement": [
-    {
-      "source": "Airdrop.js",
-      "destination": "plugins/Airdrop.js"
-    }
-  ],
-  "possession": ["plugins/Airdrop/"]
+  "files": {
+    "place": [
+      {
+        "src": "Airdrop.js",
+        "dest": "plugins/Airdrop/Airdrop.js"
+      },
+      {
+        "src": "manifest.json",
+        "dest": "plugins/Airdrop/manifest.json"
+      }
+    ]
+  }
 }

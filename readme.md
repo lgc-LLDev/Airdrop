@@ -19,14 +19,16 @@
 
 ## 截图
 
-![img](https://raw.githubusercontent.com/lgc-LLSEDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041758.png)  
-![img](https://raw.githubusercontent.com/lgc-LLSEDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041804.png)  
-![img](https://raw.githubusercontent.com/lgc-LLSEDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041738.png)  
-![img](https://raw.githubusercontent.com/lgc-LLSEDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041823.png)
+![img](https://raw.githubusercontent.com/lgc-LLDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041758.png)  
+![img](https://raw.githubusercontent.com/lgc-LLDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041804.png)  
+![img](https://raw.githubusercontent.com/lgc-LLDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041738.png)  
+![img](https://raw.githubusercontent.com/lgc-LLDev/readme/main/Airdrop/QQ%E5%9B%BE%E7%89%8720230117041823.png)
 
 ## 安装
 
-将 `Airdrop.js` 放入 `plugins` 目录即可
+```shell
+lip install github.com/lgc-LLDev/Airdrop
+```
 
 详细配置请看下方
 

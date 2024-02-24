@@ -1,17 +1,20 @@
 // LiteLoaderScript Dev Helper
 /// <reference path="../HelperLib/src/index.d.ts"/>
 /* eslint-disable no-await-in-loop */
-/* global ll mc logger ParticleColor File */
+/* global ll mc logger ParticleColor file NBT */
 
 const PLUGIN_NAME = 'Airdrop';
-const PLUGIN_VERSION = [0, 1, 5];
+/** @type {[number, number, number]} */
+const PLUGIN_VERSION = [0, 1, 6];
 
 const PLUGIN_DATA_PATH = `plugins/${PLUGIN_NAME}`;
 const PLUGIN_CONFIG_PATH = `${PLUGIN_DATA_PATH}/config.json`;
 
+/** @typedef {0 | 1 | 2} DimID */
+/** @typedef {1 | 2 | 4 | 8 | 16} LightBeamWidth */
 /** @typedef {[number, number]} XZPos */
-/** @typedef {[number, number, number]} XZDimPos */
-/** @typedef {[number, number, number, number]} XYZDimPos */
+/** @typedef {[number, number, DimID]} XZDimPos */
+/** @typedef {[number, number, number, DimID]} XYZDimPos */
 /**
  * @typedef {Object} AwardConfig
  * @property {string} type 物品id
@@ -32,7 +35,7 @@ const PLUGIN_CONFIG_PATH = `${PLUGIN_DATA_PATH}/config.json`;
  * @property {number} nearbyDistance
  * @property {string} tipSoundId
  * @property {string} lightBeamColor
- * @property {number} lightBeamWidth
+ * @property {LightBeamWidth} lightBeamWidth
  * @property {number} lightBeamDotCount
  */
 /** @type {Config} */
@@ -113,6 +116,7 @@ const droppedAirdrops = [];
 let summonedToolManUuid = null;
 let droppingAirdrop = false;
 
+/** @type {ParticleSpawner?} */
 let particleSpawner = null;
 try {
   particleSpawner = mc.newParticleSpawner();
@@ -121,13 +125,16 @@ try {
 }
 
 function updateConfig() {
-  File.writeTo(PLUGIN_CONFIG_PATH, JSON.stringify(pluginConfig, null, 2));
+  file.writeTo(PLUGIN_CONFIG_PATH, JSON.stringify(pluginConfig, null, 2));
 }
 
 function loadConfig() {
-  if (File.exists(PLUGIN_CONFIG_PATH))
-    pluginConfig = JSON.parse(File.readFrom(PLUGIN_CONFIG_PATH));
-  else updateConfig();
+  if (file.exists(PLUGIN_CONFIG_PATH)) {
+    const content = file.readFrom(PLUGIN_CONFIG_PATH);
+    if (content) pluginConfig = JSON.parse(content);
+    return;
+  }
+  updateConfig();
 }
 
 loadConfig();
@@ -148,7 +155,7 @@ function sleep(ms) {
  * @returns {number}
  */
 function randomInt(minNum, maxNum) {
-  return parseInt(Math.random() * (maxNum - minNum + 1) + minNum, 10);
+  return Math.random() * (maxNum - minNum + 1) + minNum;
 }
 
 /**
@@ -161,15 +168,21 @@ function randomRange(num, range) {
 }
 
 /**
- * @template T
+ * @template {Object} T
+ * @template {keyof T} KD
  * @param {T} obj
- * @param {any} key
- * @param {any} [defaultKey]
- * @returns {T[key] | T[defaultKey]}
+ * @param {keyof T} key
+ * @param {KD} [defaultKey]
+ * @returns {T[key] | (KD extends (undefined | null) ? undefined : T[`${defaultKey}`])}
  */
-function getObjectProperty(obj, key, defaultKey = '0') {
-  key = String(key);
-  if (!(key in obj)) key = String(defaultKey);
+function getObjectProperty(obj, key, defaultKey) {
+  if (!(key in obj)) {
+    if (defaultKey === undefined || defaultKey === null) {
+      // @ts-expect-error - as any
+      return undefined;
+    }
+    key = defaultKey;
+  }
   return obj[key];
 }
 
@@ -235,13 +248,26 @@ function getAwardItems() {
     const amount = randomInt(min, max);
     if (!amount) continue;
 
+    /** @type {LLSE_Item?} */
     let item;
     if (sNbt) {
-      item = modifyItemCount(mc.newItem(sNbt), amount);
+      const nbt = NBT.parseSNBT(sNbt);
+      if (!nbt) {
+        logger.error(`Parse SNBT failed: ${sNbt}`);
+        continue;
+      }
+      item = mc.newItem(nbt);
     } else {
       item = mc.newItem(type, amount);
-      if (typeof aux === 'number') item.setAux(aux);
     }
+
+    if (!item) {
+      logger.error(`Create item failed`);
+      continue;
+    }
+    if (sNbt) item = modifyItemCount(item, amount);
+    else if (typeof aux === 'number') item.setAux(aux);
+
     items.push(item);
   }
   return items.filter((v) => v);
@@ -266,6 +292,10 @@ async function trySummonAirdrop(pos) {
     z,
     dimId
   );
+  if (!loadToolMan) {
+    logger.error(`Failed to spawn simulated player!`);
+    return false;
+  }
   summonedToolManUuid = loadToolMan.uuid;
 
   while (!mc.getBlock(x, maxY, z, dimId)) {
@@ -286,7 +316,7 @@ async function trySummonAirdrop(pos) {
     ) {
       y += 1;
 
-      if (mc.setBlock(x, y, z, dimId, 'minecraft:chest')) {
+      if (mc.setBlock(x, y, z, dimId, 'minecraft:chest', 0)) {
         logger.info(`空投最终落点 x=${x} y=${y} z=${z} dimId=${dimId}`);
 
         droppedAirdrops.push({
@@ -295,17 +325,17 @@ async function trySummonAirdrop(pos) {
           barColor: randomInt(0, 6),
         });
 
-        // 没办法 凑合一下吧
-        setTimeout(() => {
-          const chest = mc.getBlock(x, y, z, dimId);
-          const container = chest.getContainer();
+        await sleep(0);
+        const chest = mc.getBlock(x, y, z, dimId);
+        if (!chest) {
+          logger.error(`Failed to get airdrop target chest block!`);
+          return false;
+        }
 
-          for (const it of getAwardItems())
-            container.addItemToFirstEmptySlot(it);
+        const container = chest.getContainer();
+        for (const it of getAwardItems()) container.addItemToFirstEmptySlot(it);
 
-          loadToolMan.simulateDisconnect();
-        }, 0);
-
+        loadToolMan.simulateDisconnect();
         playTipSound();
         summonedToolManUuid = null;
         return true;
@@ -351,6 +381,7 @@ function spawnLightBeam(pos, yOffset = 0) {
       lightBeamWidth,
       0,
       (yMax - y) * lightBeamDotCount,
+      // @ts-expect-error - lightBeamColor as keyof ParticleColor
       ParticleColor[lightBeamColor]
     );
   } else {
@@ -368,7 +399,9 @@ setInterval(() => {
     for (const player of getOnlineRealPlayers()) {
       let distanceTip;
       if (dimId === player.pos.dimid) {
-        const distance = player.distanceTo(x, y, z, dimId).toFixed(2);
+        const distance = player
+          .distanceTo(mc.newFloatPos(x, y, z, dimId))
+          .toFixed(2);
         distanceTip = `§r距离 §g${distance} §r方块`;
       } else {
         distanceTip = `§c维度不匹配`;
@@ -419,7 +452,7 @@ function removeAirdrop(pos) {
 mc.listen('onMobHurt', (mob) => {
   if (mob.isPlayer()) {
     const player = mob.toPlayer();
-    if (summonedToolManUuid === player.uuid) return false;
+    if (player && summonedToolManUuid === player.uuid) return false;
   }
   return true;
 });
@@ -483,6 +516,7 @@ async function summonAirdrop(player) {
 
   let centerX;
   let centerZ;
+  /** @type {DimID} */
   let dimId;
   if (player) {
     ({ x: centerX, z: centerZ, dimid: dimId } = player.pos);
@@ -533,6 +567,7 @@ if (pluginConfig.interval) {
 mc.listen('onUseItem', (player) => {
   const { triggerItem } = pluginConfig;
   const item = player.getHand();
+
   if (item.type === triggerItem) {
     if (!preCheckCanSummon(player)) return false;
 
@@ -540,10 +575,16 @@ mc.listen('onUseItem', (player) => {
     modifyItemCount(item, count - 1);
     player.refreshItems();
 
+    const clonedItem = item.clone();
+    if (!clonedItem) {
+      logger.error(`Failed to clone player hand item!`);
+      return true;
+    }
+
     setTimeout(() => {
       (async () => {
         if (!(await summonAirdrop(player))) {
-          player.getInventory().addItem(modifyItemCount(item.clone(), 1));
+          player.getInventory().addItem(modifyItemCount(clonedItem, 1));
           player.refreshItems();
         }
       })();

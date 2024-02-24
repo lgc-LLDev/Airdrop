@@ -1,0 +1,10 @@
+{
+  "entry": "Airdrop.js",
+  "name": "Airdrop",
+  "type": "lse-quickjs",
+  "dependencies": [
+    {
+      "name": "legacy-script-engine-quickjs"
+    }
+  ]
+}
