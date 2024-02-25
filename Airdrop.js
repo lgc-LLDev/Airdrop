@@ -5,7 +5,7 @@
 
 const PLUGIN_NAME = 'Airdrop';
 /** @type {[number, number, number]} */
-const PLUGIN_VERSION = [0, 1, 6];
+const PLUGIN_VERSION = [0, 1, 7];
 
 const PLUGIN_DATA_PATH = `plugins/${PLUGIN_NAME}`;
 const PLUGIN_CONFIG_PATH = `${PLUGIN_DATA_PATH}/config.json`;
@@ -150,12 +150,13 @@ function sleep(ms) {
 }
 
 /**
- * @param {number} minNum
- * @param {number} maxNum
+ * 生成指定区间随机整数
+ * @param {number} min
+ * @param {number} max
  * @returns {number}
  */
-function randomInt(minNum, maxNum) {
-  return Math.random() * (maxNum - minNum + 1) + minNum;
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 /**
@@ -400,7 +401,7 @@ setInterval(() => {
       let distanceTip;
       if (dimId === player.pos.dimid) {
         const distance = player
-          .distanceTo(mc.newFloatPos(x, y, z, dimId))
+          .distanceTo(mc.newIntPos(x, y, z, dimId))
           .toFixed(2);
         distanceTip = `§r距离 §g${distance} §r方块`;
       } else {
