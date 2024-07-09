@@ -51,7 +51,7 @@ lip install github.com/lgc-LLDev/Airdrop
   // 所有空投的范围限制，格式 [[最小X轴, 最小Z轴], [最大X轴, 最大Z轴]]
   "range": [
     [-8000, -8000],
-    [8000, 8000]
+    [8000, 8000],
   ],
 
   // 全服能同时存在的最多的未打开的空投数量
@@ -93,7 +93,7 @@ lip install github.com/lgc-LLDev/Airdrop
 
       // 当物品在空投里出现后，物品可能出现的个数
       // 格式 [最少, 最多]
-      "amountRange": [0, 2]
+      "amountRange": [0, 2],
     },
     {
       // 当有 sNbt 项时，奖励将为此 SNBT 字符串对应的物品
@@ -102,9 +102,9 @@ lip install github.com/lgc-LLDev/Airdrop
 
       // 同上
       "chance": 1,
-      "amountRange": [1, 4]
-    }
-  ]
+      "amountRange": [1, 4],
+    },
+  ],
 }
 ```
 

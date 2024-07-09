@@ -3,12 +3,12 @@
 /* eslint-disable no-await-in-loop */
 /* global ll mc logger ParticleColor file NBT */
 
-const PLUGIN_NAME = 'Airdrop';
+const PLUGIN_NAME = 'Airdrop'
 /** @type {[number, number, number]} */
-const PLUGIN_VERSION = [0, 1, 7];
+const PLUGIN_VERSION = [0, 1, 7]
 
-const PLUGIN_DATA_PATH = `plugins/${PLUGIN_NAME}`;
-const PLUGIN_CONFIG_PATH = `${PLUGIN_DATA_PATH}/config.json`;
+const PLUGIN_DATA_PATH = `plugins/${PLUGIN_NAME}`
+const PLUGIN_CONFIG_PATH = `${PLUGIN_DATA_PATH}/config.json`
 
 /** @typedef {0 | 1 | 2} DimID */
 /** @typedef {1 | 2 | 4 | 8 | 16} LightBeamWidth */
@@ -81,28 +81,28 @@ let pluginConfig = {
       amountRange: [0, 32],
     },
   ],
-};
+}
 
 /** @type {{[dimId: string]: [number, number]}} */
 const DIM_HEIGHT_RANGE = {
   0: [320, -64],
   1: [127, 0],
   2: [255, 0],
-};
+}
 
 /** @type {{[dimId: string]: string}} */
 const DIM_CHN_NAME_MAP = {
   0: '主世界',
   1: '下界',
   2: '末地',
-};
+}
 
 /** @type {{[dimId: string]: string}} */
 const DIM_NAMESPACE_MAP = {
   0: 'overworld',
   1: 'the_nether',
   2: 'the_end',
-};
+}
 
 /**
  * @typedef {Object} DroppedAirdrop
@@ -111,33 +111,33 @@ const DIM_NAMESPACE_MAP = {
  * @property {number} barColor
  */
 /** @type {DroppedAirdrop[]} */
-const droppedAirdrops = [];
+const droppedAirdrops = []
 /** @type {string | null} */
-let summonedToolManUuid = null;
-let droppingAirdrop = false;
+let summonedToolManUuid = null
+let droppingAirdrop = false
 
 /** @type {ParticleSpawner?} */
-let particleSpawner = null;
+let particleSpawner = null
 try {
-  particleSpawner = mc.newParticleSpawner();
+  particleSpawner = mc.newParticleSpawner()
 } catch (e) {
-  logger.warn('ParticleAPI加载失败，将使用烟花代替空投光柱！');
+  logger.warn('ParticleAPI加载失败，将使用烟花代替空投光柱！')
 }
 
 function updateConfig() {
-  file.writeTo(PLUGIN_CONFIG_PATH, JSON.stringify(pluginConfig, null, 2));
+  file.writeTo(PLUGIN_CONFIG_PATH, JSON.stringify(pluginConfig, null, 2))
 }
 
 function loadConfig() {
   if (file.exists(PLUGIN_CONFIG_PATH)) {
-    const content = file.readFrom(PLUGIN_CONFIG_PATH);
-    if (content) pluginConfig = JSON.parse(content);
-    return;
+    const content = file.readFrom(PLUGIN_CONFIG_PATH)
+    if (content) pluginConfig = JSON.parse(content)
+    return
   }
-  updateConfig();
+  updateConfig()
 }
 
-loadConfig();
+loadConfig()
 
 /**
  * @param {number} ms
@@ -145,8 +145,8 @@ loadConfig();
  */
 function sleep(ms) {
   return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+    setTimeout(resolve, ms)
+  })
 }
 
 /**
@@ -156,7 +156,7 @@ function sleep(ms) {
  * @returns {number}
  */
 function randomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1) + min);
+  return Math.floor(Math.random() * (max - min + 1) + min)
 }
 
 /**
@@ -165,7 +165,7 @@ function randomInt(min, max) {
  * @returns {number}
  */
 function randomRange(num, range) {
-  return randomInt(num - range, num + range);
+  return randomInt(num - range, num + range)
 }
 
 /**
@@ -180,11 +180,11 @@ function getObjectProperty(obj, key, defaultKey) {
   if (!(key in obj)) {
     if (defaultKey === undefined || defaultKey === null) {
       // @ts-expect-error - as any
-      return undefined;
+      return undefined
     }
-    key = defaultKey;
+    key = defaultKey
   }
-  return obj[key];
+  return obj[key]
 }
 
 /**
@@ -192,9 +192,9 @@ function getObjectProperty(obj, key, defaultKey) {
  * @returns {string}
  */
 function formatPos(pos) {
-  const [x, y, z, dimId] = pos;
-  const dim = getObjectProperty(DIM_CHN_NAME_MAP, dimId);
-  return `§d${dim} §a${x} §c${y} §b${z}§r`;
+  const [x, y, z, dimId] = pos
+  const dim = getObjectProperty(DIM_CHN_NAME_MAP, dimId)
+  return `§d${dim} §a${x} §c${y} §b${z}§r`
 }
 
 /**
@@ -202,20 +202,19 @@ function formatPos(pos) {
  * @returns {string}
  */
 function getDimNamespace(dimId) {
-  return getObjectProperty(DIM_NAMESPACE_MAP, dimId);
+  return getObjectProperty(DIM_NAMESPACE_MAP, dimId)
 }
 
 /**
  * @returns {Player[]}
  */
 function getOnlineRealPlayers() {
-  return mc.getOnlinePlayers().filter((p) => !p.isSimulatedPlayer());
+  return mc.getOnlinePlayers().filter((p) => !p.isSimulatedPlayer())
 }
 
 function playTipSound() {
-  const { tipSoundId } = pluginConfig;
-  if (tipSoundId)
-    mc.runcmdEx(`execute as @a at @a run playsound ${tipSoundId} @s ~~~`);
+  const { tipSoundId } = pluginConfig
+  if (tipSoundId) mc.runcmdEx(`execute as @a at @a run playsound ${tipSoundId} @s ~~~`)
 }
 
 /**
@@ -224,17 +223,17 @@ function playTipSound() {
  * @returns {Item}
  */
 function modifyItemCount(item, count) {
-  const newNbt = item.getNbt();
-  newNbt.setByte('Count', count);
-  item.setNbt(newNbt);
-  return item;
+  const newNbt = item.getNbt()
+  newNbt.setByte('Count', count)
+  item.setNbt(newNbt)
+  return item
 }
 
 /**
  * @returns {Item[]}
  */
 function getAwardItems() {
-  const items = [];
+  const items = []
   for (const obj of pluginConfig.award) {
     const {
       type,
@@ -242,36 +241,36 @@ function getAwardItems() {
       chance,
       aux,
       sNbt,
-    } = obj;
+    } = obj
 
-    if (Math.random() > chance) continue;
+    if (Math.random() > chance) continue
 
-    const amount = randomInt(min, max);
-    if (!amount) continue;
+    const amount = randomInt(min, max)
+    if (!amount) continue
 
     /** @type {LLSE_Item?} */
-    let item;
+    let item
     if (sNbt) {
-      const nbt = NBT.parseSNBT(sNbt);
+      const nbt = NBT.parseSNBT(sNbt)
       if (!nbt) {
-        logger.error(`Parse SNBT failed: ${sNbt}`);
-        continue;
+        logger.error(`Parse SNBT failed: ${sNbt}`)
+        continue
       }
-      item = mc.newItem(nbt);
+      item = mc.newItem(nbt)
     } else {
-      item = mc.newItem(type, amount);
+      item = mc.newItem(type, amount)
     }
 
     if (!item) {
-      logger.error(`Create item failed`);
-      continue;
+      logger.error(`Create item failed`)
+      continue
     }
-    if (sNbt) item = modifyItemCount(item, amount);
-    else if (typeof aux === 'number') item.setAux(aux);
+    if (sNbt) item = modifyItemCount(item, amount)
+    else if (typeof aux === 'number') item.setAux(aux)
 
-    items.push(item);
+    items.push(item)
   }
-  return items.filter((v) => v);
+  return items.filter((v) => v)
 }
 
 /**
@@ -279,35 +278,35 @@ function getAwardItems() {
  * @returns {Promise<boolean>}
  */
 async function trySummonAirdrop(pos) {
-  const [x, z, dimId] = pos;
+  const [x, z, dimId] = pos
   // const dimName = getDimNamespace(dimId);
-  const [maxY, minY] = DIM_HEIGHT_RANGE[dimId];
+  const [maxY, minY] = DIM_HEIGHT_RANGE[dimId]
 
-  const timestamp = new Date().getTime();
+  const timestamp = new Date().getTime()
 
-  logger.log(`空投选点 x=${x} z=${z} dimId=${dimId}，召唤假人加载区块`);
+  logger.log(`空投选点 x=${x} z=${z} dimId=${dimId}，召唤假人加载区块`)
   const loadToolMan = mc.spawnSimulatedPlayer(
     `ToolMan${randomInt(100000, 999999)}`,
     x,
     maxY,
     z,
-    dimId
-  );
+    dimId,
+  )
   if (!loadToolMan) {
-    logger.error(`Failed to spawn simulated player!`);
-    return false;
+    logger.error(`Failed to spawn simulated player!`)
+    return false
   }
-  summonedToolManUuid = loadToolMan.uuid;
+  summonedToolManUuid = loadToolMan.uuid
 
   while (!mc.getBlock(x, maxY, z, dimId)) {
-    await sleep(200);
+    await sleep(200)
   }
-  logger.log(`空投生成区域预加载完毕`);
+  logger.log(`空投生成区域预加载完毕`)
 
-  let lastBlock;
+  let lastBlock
   // eslint-disable-next-line for-direction
   for (let y = maxY; y >= minY; y -= 1) {
-    const block = mc.getBlock(x, y, z, dimId);
+    const block = mc.getBlock(x, y, z, dimId)
     // logger.info(`y=${y} block=${block.type}`);
     if (
       block &&
@@ -315,40 +314,40 @@ async function trySummonAirdrop(pos) {
       block.type !== 'minecraft:air' &&
       lastBlock.type === 'minecraft:air'
     ) {
-      y += 1;
+      y += 1
 
       if (mc.setBlock(x, y, z, dimId, 'minecraft:chest', 0)) {
-        logger.info(`空投最终落点 x=${x} y=${y} z=${z} dimId=${dimId}`);
+        logger.info(`空投最终落点 x=${x} y=${y} z=${z} dimId=${dimId}`)
 
         droppedAirdrops.push({
           pos: [x, y, z, dimId],
           id: timestamp,
           barColor: randomInt(0, 6),
-        });
+        })
 
-        await sleep(0);
-        const chest = mc.getBlock(x, y, z, dimId);
+        await sleep(0)
+        const chest = mc.getBlock(x, y, z, dimId)
         if (!chest) {
-          logger.error(`Failed to get airdrop target chest block!`);
-          return false;
+          logger.error(`Failed to get airdrop target chest block!`)
+          return false
         }
 
-        const container = chest.getContainer();
-        for (const it of getAwardItems()) container.addItemToFirstEmptySlot(it);
+        const container = chest.getContainer()
+        for (const it of getAwardItems()) container.addItemToFirstEmptySlot(it)
 
-        loadToolMan.simulateDisconnect();
-        playTipSound();
-        summonedToolManUuid = null;
-        return true;
+        loadToolMan.simulateDisconnect()
+        playTipSound()
+        summonedToolManUuid = null
+        return true
       }
     }
-    lastBlock = block;
-    await sleep(0);
+    lastBlock = block
+    await sleep(0)
   }
 
-  summonedToolManUuid = null;
-  loadToolMan.simulateDisconnect();
-  return false;
+  summonedToolManUuid = null
+  loadToolMan.simulateDisconnect()
+  return false
 }
 
 /**
@@ -356,11 +355,11 @@ async function trySummonAirdrop(pos) {
  * @param {number} [yOffset]
  */
 function spawnFirework([x, y, z, dimId], yOffset = 0) {
-  const dimName = getDimNamespace(dimId);
+  const dimName = getDimNamespace(dimId)
   mc.runcmdEx(
     `execute in ${dimName} run ` +
-      `summon minecraft:fireworks_rocket ${x} ${y + yOffset} ${z}`
-  );
+      `summon minecraft:fireworks_rocket ${x} ${y + yOffset} ${z}`,
+  )
 }
 
 /**
@@ -369,13 +368,13 @@ function spawnFirework([x, y, z, dimId], yOffset = 0) {
  */
 function spawnLightBeam(pos, yOffset = 0) {
   if (particleSpawner) {
-    const [x, yOrg, z, dimId] = pos;
-    const y = yOrg + yOffset;
+    const [x, yOrg, z, dimId] = pos
+    const y = yOrg + yOffset
 
-    const { lightBeamColor, lightBeamWidth, lightBeamDotCount } = pluginConfig;
-    const [yMax] = DIM_HEIGHT_RANGE[dimId];
-    const start = mc.newIntPos(x, y, z, dimId);
-    const end = mc.newIntPos(x, yMax, z, dimId);
+    const { lightBeamColor, lightBeamWidth, lightBeamDotCount } = pluginConfig
+    const [yMax] = DIM_HEIGHT_RANGE[dimId]
+    const start = mc.newIntPos(x, y, z, dimId)
+    const end = mc.newIntPos(x, yMax, z, dimId)
     particleSpawner.drawOrientedLine(
       start,
       end,
@@ -383,41 +382,39 @@ function spawnLightBeam(pos, yOffset = 0) {
       0,
       (yMax - y) * lightBeamDotCount,
       // @ts-expect-error - lightBeamColor as keyof ParticleColor
-      ParticleColor[lightBeamColor]
-    );
+      ParticleColor[lightBeamColor],
+    )
   } else {
-    pos = [...pos];
-    pos[1] += 1; // y+1
-    spawnFirework(pos);
+    pos = [...pos]
+    pos[1] += 1 // y+1
+    spawnFirework(pos)
   }
 }
 
 setInterval(() => {
   for (const { id, pos, barColor } of droppedAirdrops) {
-    const [x, y, z, dimId] = pos;
+    const [x, y, z, dimId] = pos
     // const dimName = getDimNamespace(dimId);
 
     for (const player of getOnlineRealPlayers()) {
-      let distanceTip;
+      let distanceTip
       if (dimId === player.pos.dimid) {
-        const distance = player
-          .distanceTo(mc.newIntPos(x, y, z, dimId))
-          .toFixed(2);
-        distanceTip = `§r距离 §g${distance} §r方块`;
+        const distance = player.distanceTo(mc.newIntPos(x, y, z, dimId)).toFixed(2)
+        distanceTip = `§r距离 §g${distance} §r方块`
       } else {
-        distanceTip = `§c维度不匹配`;
+        distanceTip = `§c维度不匹配`
       }
 
       player.setBossBar(
         id,
         `有空投降落于 ${formatPos(pos)} §7| ${distanceTip}`,
         100,
-        barColor
-      );
-      spawnLightBeam(pos);
+        barColor,
+      )
+      spawnLightBeam(pos)
     }
   }
-}, 1000);
+}, 1000)
 
 /**
  * @param {IntPos} pos
@@ -427,50 +424,50 @@ function removeAirdrop(pos) {
     const {
       id,
       pos: [x, y, z, dimId],
-    } = droppedAirdrops[i];
+    } = droppedAirdrops[i]
     // const dimName = getDimNamespace(dimId);
 
     if (pos.x === x && pos.y === y && pos.z === z && pos.dimid === dimId) {
-      for (const player of getOnlineRealPlayers()) player.removeBossBar(id);
-      droppedAirdrops.splice(i, 1);
+      for (const player of getOnlineRealPlayers()) player.removeBossBar(id)
+      droppedAirdrops.splice(i, 1)
 
-      const { nearbyDistance } = pluginConfig;
+      const { nearbyDistance } = pluginConfig
       const nearbyPlayers = getOnlineRealPlayers()
         .filter((p) => p.distanceTo(pos) <= nearbyDistance)
         .map((p) => p.realName)
-        .join('§7; §b');
+        .join('§7; §b')
 
       mc.broadcast(
         `§e位于 ${formatPos([x, y, z, dimId])} §e的空投已被打开！` +
-          `${nearbyPlayers ? `\n§e该空投附近的玩家： §b${nearbyPlayers}` : ''}`
-      );
-      playTipSound();
-      break;
+          `${nearbyPlayers ? `\n§e该空投附近的玩家： §b${nearbyPlayers}` : ''}`,
+      )
+      playTipSound()
+      break
     }
   }
 }
 
 mc.listen('onMobHurt', (mob) => {
   if (mob.isPlayer()) {
-    const player = mob.toPlayer();
-    if (player && summonedToolManUuid === player.uuid) return false;
+    const player = mob.toPlayer()
+    if (player && summonedToolManUuid === player.uuid) return false
   }
-  return true;
-});
+  return true
+})
 
 mc.listen('onBlockChanged', (before, after) => {
   if (before.type === 'minecraft:chest' && after.type === 'minecraft:air') {
-    const { pos } = after;
-    removeAirdrop(pos);
+    const { pos } = after
+    removeAirdrop(pos)
   }
-});
+})
 
 mc.listen('onBlockInteracted', (_, block) => {
   if (block.type === 'minecraft:chest') {
-    const { pos } = block;
-    removeAirdrop(pos);
+    const { pos } = block
+    removeAirdrop(pos)
   }
-});
+})
 
 /**
  * @param {string} msg
@@ -478,30 +475,30 @@ mc.listen('onBlockInteracted', (_, block) => {
  */
 const tell = (msg, player) => {
   if (player) {
-    player.tell(msg);
+    player.tell(msg)
   } else {
-    const msgFormatted = msg.replace(/§[a-z0-9]/g, '');
-    if (msg.startsWith('§c')) logger.error(msgFormatted);
-    else logger.info(msgFormatted);
+    const msgFormatted = msg.replace(/§[a-z0-9]/g, '')
+    if (msg.startsWith('§c')) logger.error(msgFormatted)
+    else logger.info(msgFormatted)
   }
-};
+}
 
 /**
  * @param {Player} [player]
  */
 function preCheckCanSummon(player) {
-  const { maxAirdrops } = pluginConfig;
+  const { maxAirdrops } = pluginConfig
 
   if (droppedAirdrops.length >= maxAirdrops) {
-    tell(`§c已达同时存在空投上限，无法再召唤空投`, player);
-    return false;
+    tell(`§c已达同时存在空投上限，无法再召唤空投`, player)
+    return false
   }
   if (droppingAirdrop) {
-    tell(`§c已经有一个空投在召唤了，请不要同时召唤其他空投`, player);
-    return false;
+    tell(`§c已经有一个空投在召唤了，请不要同时召唤其他空投`, player)
+    return false
   }
 
-  return true;
+  return true
 }
 
 /**
@@ -513,89 +510,85 @@ async function summonAirdrop(player) {
     summonRadius,
     maxRetries,
     range: [[minX, minZ], [maxX, maxZ]],
-  } = pluginConfig;
+  } = pluginConfig
 
-  let centerX;
-  let centerZ;
+  let centerX
+  let centerZ
   /** @type {DimID} */
-  let dimId;
+  let dimId
   if (player) {
-    ({ x: centerX, z: centerZ, dimid: dimId } = player.pos);
+    ;({ x: centerX, z: centerZ, dimid: dimId } = player.pos)
   } else {
-    centerX = randomInt(minX, maxX);
-    centerZ = randomInt(minZ, maxZ);
-    dimId = 0;
+    centerX = randomInt(minX, maxX)
+    centerZ = randomInt(minZ, maxZ)
+    dimId = 0
   }
 
-  tell('§a正在尝试召唤空投！');
-  if (player) spawnFirework([centerX, player.pos.y, centerZ, dimId]);
+  tell('§a正在尝试召唤空投！')
+  if (player) spawnFirework([centerX, player.pos.y, centerZ, dimId])
 
   for (let i = 0; i < maxRetries; i += 1) {
-    const x = randomRange(centerX, summonRadius);
-    const z = randomRange(centerZ, summonRadius);
+    const x = randomRange(centerX, summonRadius)
+    const z = randomRange(centerZ, summonRadius)
     if (x >= minX && z >= minZ && x <= maxX && z <= maxZ) {
-      droppingAirdrop = true;
+      droppingAirdrop = true
       try {
         if (await trySummonAirdrop([x, z, dimId])) {
-          const tipFrom = player
-            ? `§a玩家 §g${player.realName} §a`
-            : `§a服务器自动`;
-          mc.broadcast(`${tipFrom}召唤了一个空投！`);
-          playTipSound();
-          return true;
+          const tipFrom = player ? `§a玩家 §g${player.realName} §a` : `§a服务器自动`
+          mc.broadcast(`${tipFrom}召唤了一个空投！`)
+          playTipSound()
+          return true
         }
       } catch (e) {
-        logger.error(String(e));
-        tell('§c空投召唤失败！');
+        logger.error(String(e))
+        tell('§c空投召唤失败！')
       } finally {
-        droppingAirdrop = false;
+        droppingAirdrop = false
       }
     }
   }
 
-  tell(
-    `§c我们尝试了 ${maxRetries} 次都没有找到适合的空投落点，请换个地方再试试吧`
-  );
-  return false;
+  tell(`§c我们尝试了 ${maxRetries} 次都没有找到适合的空投落点，请换个地方再试试吧`)
+  return false
 }
 
 if (pluginConfig.interval) {
   setInterval(() => {
-    if (preCheckCanSummon()) summonAirdrop();
-  }, pluginConfig.interval);
+    if (preCheckCanSummon()) summonAirdrop()
+  }, pluginConfig.interval)
 }
 
 mc.listen('onUseItem', (player) => {
-  const { triggerItem } = pluginConfig;
-  const item = player.getHand();
+  const { triggerItem } = pluginConfig
+  const item = player.getHand()
 
   if (item.type === triggerItem) {
-    if (!preCheckCanSummon(player)) return false;
+    if (!preCheckCanSummon(player)) return false
 
-    const { count } = item;
-    modifyItemCount(item, count - 1);
-    player.refreshItems();
+    const { count } = item
+    modifyItemCount(item, count - 1)
+    player.refreshItems()
 
-    const clonedItem = item.clone();
+    const clonedItem = item.clone()
     if (!clonedItem) {
-      logger.error(`Failed to clone player hand item!`);
-      return true;
+      logger.error(`Failed to clone player hand item!`)
+      return true
     }
 
     setTimeout(() => {
-      (async () => {
+      ;(async () => {
         if (!(await summonAirdrop(player))) {
-          player.getInventory().addItem(modifyItemCount(clonedItem, 1));
-          player.refreshItems();
+          player.getInventory().addItem(modifyItemCount(clonedItem, 1))
+          player.refreshItems()
         }
-      })();
-    }, 0);
-    return false;
+      })()
+    }, 0)
+    return false
   }
-  return true;
-});
+  return true
+})
 
 ll.registerPlugin(PLUGIN_NAME, '空投', PLUGIN_VERSION, {
   Author: 'student_2333',
   License: 'Apache-2.0',
-});
+})
